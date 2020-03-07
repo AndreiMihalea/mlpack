@@ -37,7 +37,7 @@ double MarginRankingLoss<InputDataType, OutputDataType>::Forward(
     const ThirdInputType&& y)
 {
   return arma::accu(arma::max(arma::zeros(size(y)), 
-    -y % (x1 - x2) + margin)) / y.n_cols;
+      -y % (x1 - x2) + margin)) / y.n_cols;
 }
 
 template<typename InputDataType, typename OutputDataType>
@@ -56,7 +56,7 @@ void MarginRankingLoss<InputDataType, OutputDataType>::Backward(
   output = -y % (x1 - x2) + margin;
   output.elem(arma::find(output >= 0)).ones();
   output.elem(arma::find(output < 0)).zeros();
-  output = (x2 - x1) % output;
+  output = (x2 - x1) % output / y.n_cols;
 }
 
 template<typename InputDataType, typename OutputDataType>

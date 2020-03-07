@@ -482,9 +482,9 @@ BOOST_AUTO_TEST_CASE(MarginRankingLossTest)
 
   // Test the Forward function on a user generator input and compare it against
   // the manually calculated result.
-  x1 = arma::mat("1, 2, 5, 7, -1, -3");
-  x2 = arma::mat("-1, 3, -4, 11, 3, -3");
-  y = arma::mat("1, -1, -1, 1, -1, 1");
+  x1 = arma::mat("1 2 5 7 -1 -3");
+  x2 = arma::mat("-1 3 -4 11 3 -3");
+  y = arma::mat("1 -1 -1 1 -1 1");
   double error = module.Forward(std::move(x1), std::move(x2), std::move(y));
   // Computed using PyTorch
   // >>> import torch
@@ -492,38 +492,37 @@ BOOST_AUTO_TEST_CASE(MarginRankingLossTest)
   // >>> x1 = torch.tensor([1., 2., 5., 7., -1., -3.])
   // >>> x2 = torch.tensor([-1., 3., -4., 11., 3., -3.])
   // >>> y = torch.tensor([1., -1., -1., 1., -1., 1.], requires_grad=True)
-  // >>> loss = F.margin_ranking_loss(x1, x2, y)
+  // >>> loss = F.margin_ranking_loss(x1, x2, y, margin=1.)
   // >>> loss.item()
-  // 2.1666667461395264
+  // 2.6666667461395264
   // >>> y.grad
-  // tensor([-0.0000,  0.0000, -1.5000,  0.6667,  0.0000, -0.0000])
-  BOOST_REQUIRE_CLOSE(error, 2.1666667, 1e-3);
+  // tensor([-0.0000,  0.1667, -1.5000,  0.6667,  0.0000, -0.0000])
+  BOOST_REQUIRE_CLOSE(error, 2.66667, 1e-3);
 
   // Test the Backward function.
   module.Backward(std::move(x1), std::move(x2), std::move(y), 
       std::move(output));
 
-  CheckMatrices(output, arma::mat("0.0000 0.0000 -1.5000 0.6667 "
-      "0.0000 0.0000"));
+  CheckMatrices(output, arma::mat("-0.0000000 0.1666667 -1.5000000 0.6666667 "
+      "0.0000000 -0.0000000"), 1e-4);
   BOOST_REQUIRE_EQUAL(output.n_rows, y.n_rows);
   BOOST_REQUIRE_EQUAL(output.n_cols, y.n_cols);
 
   // Test the error function on another input.
-  x1 = arma::mat("0.4287 -1.6208 -1.5006 -0.4473 1.5208 -4.5184 9.3574 -4.8090 "
-      "4.3455 5.2070");
+  x1 = arma::mat("0.4287 -1.6208 -1.5006 -0.4473 1.5208 -4.5184 9.3574 "
+      "-4.8090 4.3455 5.2070");
   x2 = arma::mat("-4.5288 -9.2766 -0.5882 -5.6643 -6.0175 8.8506 3.4759 "
       "-9.4886 2.2755 8.4951");
   y = arma::mat("1 1 -1 1 -1 1 1 1 -1 1");
   error = module.Forward(std::move(x1), std::move(x2), std::move(y));
-  BOOST_REQUIRE_CLOSE(error, 2.6265306, 1e-3);
+  BOOST_REQUIRE_CLOSE(error, 3.03530, 1e-4);
 
-  // Test the Backward function on a single input.
+  // Test the Backward function on the second input.
   module.Backward(std::move(x1), std::move(x2), std::move(y),
       std::move(output));
   
-  CheckMatrices(output, arma::mat("0.0000 0.0000 0.0000 0.0000 -0.7538 1.3369 "
-      "0.0000 0.0000 0.2070 0.3288"));
-  BOOST_REQUIRE_EQUAL(output.n_elem, 1);
+  CheckMatrices(output, arma::mat("0.000000 0.000000 0.091240 0.000000 "
+      "-0.753830 1.336900 0.000000 0.000000 -0.207000 0.328810"), 1e-6);
 }
 
 BOOST_AUTO_TEST_SUITE_END();
